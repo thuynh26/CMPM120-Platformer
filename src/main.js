@@ -13,27 +13,27 @@ let config = {
             debug: true,
             gravity: {
                 x: 0,
-                y:0
+                y: 0
             }
         }
     },
 
     width: 1440,
     height: 900,
-    scene: [Load, Platformer], // CHANGE 
+    scene: [Load, PF_L1], // CHANGE 
     
     plugins: {
         scene: [
             {
                 key: 'AnimatedTiles',
-                plugin: AnimationTiles,
-                mapping: 'animatedTiles'      
+                plugin: AnimatedTiles,
+                mapping: 'animatedTiles'    
             }
         ]
     }
 }
 
-var cursor;
+var cursors;
 const SCALE = 2.0;
 var my = {sprite: {}, text: {}, vfx: {}};
 
