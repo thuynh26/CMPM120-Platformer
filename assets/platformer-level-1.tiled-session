@@ -1,0 +1,11 @@
+{
+    "frame.defaultDuration": 400,
+    "last.imagePath": "C:/VSC_Projects/CMPM120-Platformer/assets",
+    "map.lastUsedFormat": "json",
+    "property.type": "bool",
+    "tileset.embedInMap": true,
+    "tileset.tileSize": {
+        "height": 18,
+        "width": 18
+    }
+}

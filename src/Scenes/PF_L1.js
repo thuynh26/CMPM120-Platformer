@@ -18,24 +18,35 @@ class PF_L1 extends Phaser.Scene {
     }
 
     create() {
-        // Create a new tilemap game object which uses 18x18 pixel tiles, and is
-        // 45 tiles wide and 25 tiles tall.
-        this.map = this.add.tilemap("platformer-level-1", 18, 18, 45, 25);
+        // tilemap game w: 135 tiles, h: 25 tiles, 18x18 pixel tiles
+        this.map = this.add.tilemap("platformer-level-1", 18, 18, 135, 25);
 
-        // Add a tileset to the map
-        // First parameter: name we gave the tileset in Tiled
-        // Second parameter: key for the tilesheet (from this.load.image in Load.js)
-        this.tileset = this.map.addTilesetImage("kenny_tilemap_packed", "tilemap_tiles");
+        const ts1 = this.map.addTilesetImage(
+            "food_tilemap_packed", 
+            "food_tilemap_tiles"    
+        );
+        const ts2 = this.map.addTilesetImage(
+            "tilemap_packed",       
+            "tilemap_tiles"        
+        );
 
-        // Create a layer
-        this.groundLayer = this.map.createLayer("Ground-n-Platforms", this.tileset, 0, 0);
+        // Give Phaser _both_ tilesets:
+        this.groundLayer = this.map.createLayer(
+            "Ground-n-Platforms",
+            [ ts1, ts2 ],  
+            0, 0
+        );
+        this.detailsLayer = this.map.createLayer(
+            "Details-n-Decor",
+            [ ts1, ts2 ],
+            0, 0
+        );
 
-        // Make it collidable
-        this.groundLayer.setCollisionByProperty({
-            collides: true
-        });
+        // now tiles from both sets will render wherever Tile indices point
+        this.groundLayer.setCollisionByProperty({ collides: true });
 
-        this.animatedTiles.init(this.map);  // Initialize tile animations?
+        // Initialize tile animations
+        this.animatedTiles.init(this.map);  
 
         // TODO: Add createFromObjects here
         // Look for "coin" objects -> assign coin texture from tilemap sprite sheet
@@ -73,9 +84,9 @@ class PF_L1 extends Phaser.Scene {
         // Enable collision handling
         this.physics.add.collider(my.sprite.player, this.groundLayer);
 
-        // set up Phaser-provided cursor key input
-        cursors = this.input.keyboard.createCursorKeys();
 
+// KEY INPUTS
+        cursors = this.input.keyboard.createCursorKeys();
         this.rKey = this.input.keyboard.addKey('R');
 
         // debug key listener (assigned to D key)
@@ -84,7 +95,8 @@ class PF_L1 extends Phaser.Scene {
             this.physics.world.debugGraphic.clear()
         }, this);
 
-        // TODO: Add movement vfx here
+
+// MOVEMENT PARTICLES
         my.vfx.walking = this.add.particles(0, 0, "kenny-particles", {
             frame: ['smoke_03.png', 'smoke_09.png'],
             scale: {start: 0.02, end: 0.08},
@@ -94,7 +106,8 @@ class PF_L1 extends Phaser.Scene {
 
         my.vfx.walking.stop();
 
-        // TODO: add camera code here
+
+// GAME CAMERA
         this.cameras.main.setBounds(0, 0, this.map.widthInPixels, this.map.heightInPixels);
         this.cameras.main.startFollow(my.sprite.player, true, 0.25, 0.25);
         this.cameras.main.setDeadzone(50, 50);
@@ -104,13 +117,11 @@ class PF_L1 extends Phaser.Scene {
         console.log(this.cameras.main.worldView.y);  
 
 
-    // ===== EXTRA CREDIT 2 ===== //
-        // display score 
+// DISPLAY SCORE 
         this.coinText = this.add.text(370, 240, "Coins: " + this.coinScore, {
             fontSize: '18px'
         });
         this.coinText.setScrollFactor(0, 0);
-
 
         // coin collection vfx 
         this.coinParticle = this.add.particles(0, 0, "kenny-particles", {
@@ -124,8 +135,7 @@ class PF_L1 extends Phaser.Scene {
         });
         this.coinParticle.stop();
 
-        // TODO: Add coin collision handler
-        // removes coin on overlap with player character
+        // coin collision handler - removes coin on overlap with player character
         this.physics.add.overlap(my.sprite.player, this.coinGroup, (player, coin) => {
             this.coinParticle.emitParticleAt(coin.x, coin.y);
 
@@ -134,7 +144,6 @@ class PF_L1 extends Phaser.Scene {
             this.coinScore += 1
             this.coinText.setText("Coins: " + this.coinScore);
         });
-    // ===== EXTRA CREDIT 2 ===== //
     }
 
     update() {
