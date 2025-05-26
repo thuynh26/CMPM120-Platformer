@@ -224,8 +224,7 @@ class PF_L1 extends Phaser.Scene {
 
         if (Phaser.Input.Keyboard.JustDown(this.shiftKey) && this.canDash) {
             this.dashSound.play();
-            this.doDash();
-        }
+            this.doDash();        }
 
         // 2) WHILE DASHING: skip the normal left/right/jump code
         if (this.isDashing) {

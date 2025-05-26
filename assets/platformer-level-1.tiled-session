@@ -1,8 +1,38 @@
 {
+    "activeFile": "platformer-level-1.tmj",
+    "expandedProjectPaths": [
+        "."
+    ],
+    "fileStates": {
+        "": {
+            "scaleInEditor": 1
+        },
+        "platformer-level-1.tmj": {
+            "scale": 1.5,
+            "selectedLayer": 0,
+            "viewCenter": {
+                "x": 1460,
+                "y": 273.66666666666663
+            }
+        },
+        "platformer-level-1.tmj#food_tilemap_packed": {
+            "scaleInDock": 1
+        },
+        "platformer-level-1.tmj#tilemap_packed": {
+            "scaleInDock": 1
+        }
+    },
     "frame.defaultDuration": 400,
     "last.imagePath": "C:/VSC_Projects/CMPM120-Platformer/assets",
     "map.lastUsedFormat": "json",
+    "openFiles": [
+        "platformer-level-1.tmj"
+    ],
+    "project": "platformer-level-1.tiled-project",
     "property.type": "bool",
+    "recentFiles": [
+        "platformer-level-1.tmj"
+    ],
     "tileset.embedInMap": true,
     "tileset.tileSize": {
         "height": 18,
