@@ -1,5 +1,4 @@
-// Title.js
-// A simple title screen that prompts the player to press SPACE to start
+
 class Title extends Phaser.Scene {
   constructor() {
     super('titleScene');

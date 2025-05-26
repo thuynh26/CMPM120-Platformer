@@ -7,7 +7,7 @@ class Load extends Phaser.Scene {
         this.load.setPath("./assets/");
 
         // load game audio
-        // this.load.audio('ambiance', 'ambiance.wav');
+        this.load.audio('bgm', 'bgm.mp3');
         // this.load.audio('walksound', 'walk.wav');
         this.load.audio('dashSound', 'Dash.wav');
         this.load.audio('jumpSound', 'Jump.wav');

@@ -28,25 +28,34 @@ class PF_L1 extends Phaser.Scene {
 // ################## CREATE ################## //
     create() {
         // game audio
+        this.bgMusic = this.sound.add('bgm', {
+            loop: true,
+            volume: 0.10
+        });
+
         this.jumpSound = this.sound.add('jumpSound', {
             loop: false,
-            volume: .10  
+            volume: .08  
         });
 
         this.coinSound = this.sound.add('coinSound', {
             loop: false,
-            volume: .25
+            volume: .2
         });
 
         this.dashSound = this.sound.add('dashSound', {
             loop: false,
-            volume: .25  
+            volume: .1  
         });
 
         this.finishSound = this.sound.add('finishSound', {
             loop: false,
-            volume: .25  
+            volume: .2  
         });
+
+        if (!this.bgMusic.isPlaying) {
+            this.bgMusic.play();
+        }
 
         // parallax background
         this.add.image(0, 0, "bg-1").setOrigin(0,0).setScrollFactor(0).setScale(this.SCALE + 0.085);
