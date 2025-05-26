@@ -9,10 +9,10 @@
         },
         "platformer-level-1.tmj": {
             "scale": 1.5,
-            "selectedLayer": 0,
+            "selectedLayer": 1,
             "viewCenter": {
-                "x": 1460,
-                "y": 273.66666666666663
+                "x": 114,
+                "y": 359.33333333333337
             }
         },
         "platformer-level-1.tmj#food_tilemap_packed": {
