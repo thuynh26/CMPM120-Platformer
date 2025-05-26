@@ -16,6 +16,13 @@ class PF_L1 extends Phaser.Scene {
         this.coinScore = 0;
         this.coinText = null;
 
+        // player dash movement
+        this.canDash = true;    // dash cooled down check
+        this.isDashing = false;   // 
+        this.dashSpeed = 300;     // pixels/sec
+        this.dashTime = 150;     // ms duration of dash
+        this.dashCooldown = 500;     // ms before you can dash again
+
     }
 
 // ################## CREATE ################## //
@@ -109,6 +116,9 @@ class PF_L1 extends Phaser.Scene {
         cursors = this.input.keyboard.createCursorKeys();
         this.rKey = this.input.keyboard.addKey('R');
 
+        // player dash key
+        this.shiftKey = this.input.keyboard.addKey('SHIFT');
+
         // debug key listener (assigned to D key)
         this.input.keyboard.on('keydown-D', () => {
             this.physics.world.drawDebug = this.physics.world.drawDebug ? false : true
@@ -124,8 +134,7 @@ class PF_L1 extends Phaser.Scene {
             alpha: {start: 1, end: 0.1},
         });
 
-        my.vfx.walking.stop();
-
+        my.vfx.walking.stop();   
 
     // GAME CAMERA
         this.cameras.main.setBounds(0, 0, this.map.widthInPixels, this.map.heightInPixels);
@@ -174,6 +183,17 @@ class PF_L1 extends Phaser.Scene {
         this.bg2.tilePositionX = camX * 0.8;  // 80% camera speed
         this.bg3.tilePositionX = camX * 0.5;  // 50%
         this.bg4.tilePositionX = camX * 0.2; 
+
+        if (Phaser.Input.Keyboard.JustDown(this.shiftKey) && this.canDash) {
+        this.doDash();
+        }
+
+        // 2) WHILE DASHING: skip the normal left/right/jump code
+        if (this.isDashing) {
+        // you might still want gravity/jumping or not;
+        // remove this `return` if you want to preserve jump input
+        return;
+        }
 
         if(cursors.left.isDown) {
             my.sprite.player.setAccelerationX(-this.ACCELERATION);
@@ -225,4 +245,33 @@ class PF_L1 extends Phaser.Scene {
         }
 
     }
+
+    doDash() {
+        this.isDashing = true;
+        this.canDash   = false;
+
+        const player = my.sprite.player;
+            // determine direction from flipX (if you flip the sprite when facing right)
+        const dir = player.flipX ? 1 : -1;
+
+        player.setVelocityX(dir * this.dashSpeed);
+
+            // ignore gravity during dash
+        player.body.allowGravity = false;
+
+            // end the dash after dashTime
+        this.time.delayedCall(this.dashTime, () => {
+        this.isDashing = false;
+        player.body.allowGravity = true;
+
+            // zero out horizontal speed to prevent sliding
+            player.setVelocityX(0);
+
+            // start cooldown timer
+            this.time.delayedCall(this.dashCooldown, () => {
+                this.canDash = true;
+            });
+        });
+        }
+
 }
