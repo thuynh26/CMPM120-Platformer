@@ -19,7 +19,7 @@ class PF_L1 extends Phaser.Scene {
         // player dash movement
         this.canDash = true;    // dash cooled down check
         this.isDashing = false;   // 
-        this.dashSpeed = 300;     // pixels/sec
+        this.dashSpeed = 320;     // pixels/sec
         this.dashTime = 150;     // ms duration of dash
         this.dashCooldown = 500;     // ms before you can dash again
 
@@ -27,6 +27,27 @@ class PF_L1 extends Phaser.Scene {
 
 // ################## CREATE ################## //
     create() {
+        // game audio
+        this.jumpSound = this.sound.add('jumpSound', {
+            loop: false,
+            volume: .10  
+        });
+
+        this.coinSound = this.sound.add('coinSound', {
+            loop: false,
+            volume: .25
+        });
+
+        this.dashSound = this.sound.add('dashSound', {
+            loop: false,
+            volume: .25  
+        });
+
+        this.finishSound = this.sound.add('finishSound', {
+            loop: false,
+            volume: .25  
+        });
+
         // parallax background
         this.add.image(0, 0, "bg-1").setOrigin(0,0).setScrollFactor(0).setScale(this.SCALE + 0.085);
 
@@ -127,23 +148,40 @@ class PF_L1 extends Phaser.Scene {
 
 
     // MOVEMENT PARTICLES
+        // walking
         my.vfx.walking = this.add.particles(0, 0, "kenny-particles", {
-            frame: ['smoke_03.png', 'smoke_09.png'],
-            scale: {start: 0.02, end: 0.08},
+            frame: ['star_04.png'],
+            scale: {start: 0.01, end: 0.05},
             lifespan: 350,
-            alpha: {start: 1, end: 0.1},
+            gravityY: -100,
+            alpha: {start: 0.4, end: 0.05},
         });
 
         my.vfx.walking.stop();   
+
+        // jumping 
+        my.vfx.jumping = this.add.particles(0, 0, "kenny-particles", {
+            frame: ['flare_01.png', 'light_01.png', 'light_02.png', 'light_03.png'],
+            scale: {start: 0.04, end: 0.002},
+            lifespan: 350,
+            alpha: {start: 0.5, end: 0.05},
+        });
+        my.vfx.jumping.stop();   
+
+        // dashing
+        my.vfx.dashing = this.add.particles(0, 0, "kenny-particles", {
+            frame: ['flare_01.png', 'light_01.png', 'light_02.png', 'light_03.png'],
+            scale: {start: 0.02, end: 0.002},
+            lifespan: 350,
+            alpha: {start: 0.5, end: 0.05},
+        });
+        my.vfx.dashing.stop();   
 
     // GAME CAMERA
         this.cameras.main.setBounds(0, 0, this.map.widthInPixels, this.map.heightInPixels);
         this.cameras.main.startFollow(my.sprite.player, true, 0.25, 0.25);
         this.cameras.main.setDeadzone(50, 50);
         this.cameras.main.setZoom(this.SCALE);
-
-        console.log(this.cameras.main.worldView.x);
-        console.log(this.cameras.main.worldView.y);  
 
 
     // DISPLAY SCORE 
@@ -154,12 +192,12 @@ class PF_L1 extends Phaser.Scene {
 
         // coin collection vfx 
         this.coinParticle = this.add.particles(0, 0, "kenny-particles", {
-            frame: ['star_05.png', 'star_06.png', 'star_07.png'],
-            lifespan: 400,
+            frame: ['star_06.png'],
+            lifespan: 500,
             speed: { min: 50, max: 150 },
             scale: { start: 0.1, end: 0 },
             alpha: { start: 1, end: 0 },
-            gravityY: -200,
+            gravityY: 100,
             quantity: 3
         });
         this.coinParticle.stop();
@@ -167,7 +205,7 @@ class PF_L1 extends Phaser.Scene {
         // coin collision handler - removes coin on overlap with player character
         this.physics.add.overlap(my.sprite.player, this.coinGroup, (player, coin) => {
             this.coinParticle.emitParticleAt(coin.x, coin.y);
-
+            this.coinSound.play();
             coin.destroy();
 
             this.coinScore += 1
@@ -185,7 +223,8 @@ class PF_L1 extends Phaser.Scene {
         this.bg4.tilePositionX = camX * 0.2; 
 
         if (Phaser.Input.Keyboard.JustDown(this.shiftKey) && this.canDash) {
-        this.doDash();
+            this.dashSound.play();
+            this.doDash();
         }
 
         // 2) WHILE DASHING: skip the normal left/right/jump code
@@ -200,12 +239,17 @@ class PF_L1 extends Phaser.Scene {
             my.sprite.player.resetFlip();
             my.sprite.player.anims.play('walk', true);
 
-            // TODO: add particle following code here
-            my.vfx.walking.startFollow(my.sprite.player, my.sprite.player.displayWidth/2, my.sprite.player.displayHeight/2-5, false);
+            // particle code 
+            my.vfx.walking.startFollow(my.sprite.player, my.sprite.player.displayWidth/2, my.sprite.player.displayHeight/2, false);
             my.vfx.walking.setParticleSpeed(this.PARTICLE_VELOCITY, 0);
 
             if(my.sprite.player.body.blocked.down){
                 my.vfx.walking.start();
+                /* walk sound
+                if(!this.walkSound.isPlaying){
+                    this.walkSound.play();
+                }
+                */
             }
 
         } else if(cursors.right.isDown) {
@@ -213,12 +257,17 @@ class PF_L1 extends Phaser.Scene {
             my.sprite.player.setFlip(true, false);
             my.sprite.player.anims.play('walk', true);
 
-            // TODO: add particle following code here
-            my.vfx.walking.startFollow(my.sprite.player, my.sprite.player.displayWidth/2-20, my.sprite.player.displayHeight/2-5, false);
+            // particle code 
+            my.vfx.walking.startFollow(my.sprite.player, my.sprite.player.displayWidth/2-20, my.sprite.player.displayHeight/2, false);
             my.vfx.walking.setParticleSpeed(this.PARTICLE_VELOCITY, 0);
 
             if(my.sprite.player.body.blocked.down){
                 my.vfx.walking.start();
+                /* walk sound
+                if(!this.walkSound.isPlaying){
+                    this.walkSound.play();
+                }
+                */
             }
 
         } else {
@@ -238,6 +287,11 @@ class PF_L1 extends Phaser.Scene {
         }
         if(my.sprite.player.body.blocked.down && Phaser.Input.Keyboard.JustDown(cursors.up)) {
             my.sprite.player.body.setVelocityY(this.JUMP_VELOCITY);
+            my.vfx.jumping.explode(6, my.sprite.player.x, my.sprite.player.y + my.sprite.player.displayHeight/2);
+            
+            if (!(this.jumpSound.isPlaying)) {
+                    this.jumpSound.play();
+            }
         }
 
         if(Phaser.Input.Keyboard.JustDown(this.rKey)) {
@@ -251,13 +305,14 @@ class PF_L1 extends Phaser.Scene {
         this.canDash   = false;
 
         const player = my.sprite.player;
-            // determine direction from flipX (if you flip the sprite when facing right)
         const dir = player.flipX ? 1 : -1;
 
         player.setVelocityX(dir * this.dashSpeed);
 
             // ignore gravity during dash
         player.body.allowGravity = false;
+
+        my.vfx.dashing.start();
 
             // end the dash after dashTime
         this.time.delayedCall(this.dashTime, () => {
@@ -266,7 +321,7 @@ class PF_L1 extends Phaser.Scene {
 
             // zero out horizontal speed to prevent sliding
             player.setVelocityX(0);
-
+            my.vfx.dashing.pause();
             // start cooldown timer
             this.time.delayedCall(this.dashCooldown, () => {
                 this.canDash = true;

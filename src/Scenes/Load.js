@@ -6,6 +6,14 @@ class Load extends Phaser.Scene {
     preload() {
         this.load.setPath("./assets/");
 
+        // load game audio
+        // this.load.audio('ambiance', 'ambiance.wav');
+        // this.load.audio('walksound', 'walk.wav');
+        this.load.audio('dashSound', 'Dash.wav');
+        this.load.audio('jumpSound', 'Jump.wav');
+        this.load.audio('coinSound', 'CoinCollect.wav');
+        this.load.audio('finishSound', 'Finish.wav');
+
         // Load parallax backgound
         this.load.image("bg-1", "bg1.png");
         this.load.image("bg-2", "bg2.png");
