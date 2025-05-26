@@ -27,6 +27,7 @@ class PF_L1 extends Phaser.Scene {
 
 // ################## CREATE ################## //
     create() {
+
         // game audio
         this.bgMusic = this.sound.add('bgm', {
             loop: true,
@@ -134,8 +135,10 @@ class PF_L1 extends Phaser.Scene {
 
         // set up player avatar
         my.sprite.player = this.physics.add.sprite(30, 345, "platformer_characters", "tile_0000.png");
+        this.spawnPoint = { x: 30, y: 345 };
+
         // make the physics world as big as the map
-        this.physics.world.setBounds(0, 0, this.map.widthInPixels, this.map.heightInPixels);
+        this.physics.world.setBounds(0, 0, this.map.widthInPixels, this.map.heightInPixels + 100);
         my.sprite.player.setCollideWorldBounds(true);
 
         // Enable collision handling
@@ -150,6 +153,10 @@ class PF_L1 extends Phaser.Scene {
         this.shiftKey = this.input.keyboard.addKey('SHIFT');
 
         // debug key listener (assigned to D key)
+        // start level with debugger off
+        this.physics.world.drawDebug = false;
+        this.physics.world.debugGraphic.clear();
+
         this.input.keyboard.on('keydown-D', () => {
             this.physics.world.drawDebug = this.physics.world.drawDebug ? false : true
             this.physics.world.debugGraphic.clear()
@@ -235,11 +242,8 @@ class PF_L1 extends Phaser.Scene {
             this.dashSound.play();
             this.doDash();        }
 
-        // 2) WHILE DASHING: skip the normal left/right/jump code
         if (this.isDashing) {
-        // you might still want gravity/jumping or not;
-        // remove this `return` if you want to preserve jump input
-        return;
+            return;
         }
 
         if(cursors.left.isDown) {
@@ -302,6 +306,11 @@ class PF_L1 extends Phaser.Scene {
             }
         }
 
+        // detect player death
+        if (my.sprite.player.y > this.map.heightInPixels + 50) {
+            this.respawnPlayer();
+        }
+
         if(Phaser.Input.Keyboard.JustDown(this.rKey)) {
             this.scene.restart();
         }
@@ -337,4 +346,25 @@ class PF_L1 extends Phaser.Scene {
         });
         }
 
+
+        respawnPlayer() {
+        // 1) move them back to the spawn
+        my.sprite.player.setPosition(this.spawnPoint.x, this.spawnPoint.y);
+
+        // 2) zero out any motion
+        my.sprite.player.setVelocity(0, 0);
+        my.sprite.player.body.allowGravity = true;
+
+        // 3) reset any dash state
+        this.isDashing = false;
+        this.canDash   = true;
+        my.vfx.dashing?.pause();
+
+        // 4) stop any leftover particles
+        my.vfx.walking?.stop();
+        my.vfx.jumping?.stop();
+
+        // 5) (optional) reset camera instantly
+        this.cameras.main.centerOn(this.spawnPoint.x, this.spawnPoint.y);
+        }
 }
