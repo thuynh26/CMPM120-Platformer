@@ -5,19 +5,42 @@ class PF_L1 extends Phaser.Scene {
 
     init() {
         // variables and settings
-        this.ACCELERATION = 300;
-        this.DRAG = 500;    // DRAG < ACCELERATION = icy slide
-        this.physics.world.gravity.y = 1500;
-        this.JUMP_VELOCITY = -600;
+        this.ACCELERATION = 200;
+        this.DRAG = 800;    // DRAG < ACCELERATION = icy slide
+        this.physics.world.gravity.y = 1800;
+        this.JUMP_VELOCITY = -500;
         this.PARTICLE_VELOCITY = 50;
         this.SCALE = 2.0;
 
         // track how many coins have been collected
         this.coinScore = 0;
         this.coinText = null;
+
     }
 
+// ################## CREATE ################## //
     create() {
+        // parallax background
+        this.add.image(0, 0, "bg-1").setOrigin(0,0).setScrollFactor(0).setScale(this.SCALE + 0.085);
+
+        // slowest (farthest back)
+        this.bg2 = this.add.tileSprite(0, 0, this.scale.width, 1000, "bg-2")
+        .setOrigin(0, 0)
+        .setScrollFactor(0)
+        .setScale(this.SCALE + 0.085);
+
+        // mid‑distance
+        this.bg3 = this.add.tileSprite(0, 0, this.scale.width, 1000, "bg-3")
+        .setOrigin(0, 0)
+        .setScrollFactor(0)
+        .setScale(this.SCALE + 0.085);
+
+        // closest (fastest)
+        this.bg4 = this.add.tileSprite(0, 0, this.scale.width, 1000, "bg-4")
+        .setOrigin(0, 0)
+        .setScrollFactor(0)
+        .setScale(this.SCALE + 0.085);
+
         // tilemap game w: 135 tiles, h: 25 tiles, 18x18 pixel tiles
         this.map = this.add.tilemap("platformer-level-1", 18, 18, 135, 25);
 
@@ -48,10 +71,7 @@ class PF_L1 extends Phaser.Scene {
         // Initialize tile animations
         this.animatedTiles.init(this.map);  
 
-        // TODO: Add createFromObjects here
-        // Look for "coin" objects -> assign coin texture from tilemap sprite sheet
-        // Phaser docs:
-        // https://newdocs.phaser.io/docs/3.80.0/focus/Phaser.Tilemaps.Tilemap-createFromObjects
+        // "coin" objects -> assign coin texture from tilemap sprite sheet
         this.coins = this.map.createFromObjects("Objects", {
             name: "coin",
             key: "tilemap_sheet",
@@ -67,25 +87,25 @@ class PF_L1 extends Phaser.Scene {
                 frameRate: 5,  // Higher is faster
                 repeat: -1      // Loop the animation indefinitely
          });
-
-        // Play the same animation for every memeber of the 
-        // Object coins array
+ 
+        // Object coins array + animation
         this.anims.play('coinAnim', this.coins);
 
-        // TODO: Add turn into Arcade Physics here
         // convert coin into arcade physic sprites
         this.physics.world.enable(this.coins, Phaser.Physics.Arcade.STATIC_BODY);
         this.coinGroup = this.add.group(this.coins);
 
         // set up player avatar
         my.sprite.player = this.physics.add.sprite(30, 345, "platformer_characters", "tile_0000.png");
+        // make the physics world as big as the map
+        this.physics.world.setBounds(0, 0, this.map.widthInPixels, this.map.heightInPixels);
         my.sprite.player.setCollideWorldBounds(true);
 
         // Enable collision handling
         this.physics.add.collider(my.sprite.player, this.groundLayer);
 
 
-// KEY INPUTS
+    // KEY INPUTS
         cursors = this.input.keyboard.createCursorKeys();
         this.rKey = this.input.keyboard.addKey('R');
 
@@ -96,7 +116,7 @@ class PF_L1 extends Phaser.Scene {
         }, this);
 
 
-// MOVEMENT PARTICLES
+    // MOVEMENT PARTICLES
         my.vfx.walking = this.add.particles(0, 0, "kenny-particles", {
             frame: ['smoke_03.png', 'smoke_09.png'],
             scale: {start: 0.02, end: 0.08},
@@ -107,7 +127,7 @@ class PF_L1 extends Phaser.Scene {
         my.vfx.walking.stop();
 
 
-// GAME CAMERA
+    // GAME CAMERA
         this.cameras.main.setBounds(0, 0, this.map.widthInPixels, this.map.heightInPixels);
         this.cameras.main.startFollow(my.sprite.player, true, 0.25, 0.25);
         this.cameras.main.setDeadzone(50, 50);
@@ -117,7 +137,7 @@ class PF_L1 extends Phaser.Scene {
         console.log(this.cameras.main.worldView.y);  
 
 
-// DISPLAY SCORE 
+    // DISPLAY SCORE 
         this.coinText = this.add.text(370, 240, "Coins: " + this.coinScore, {
             fontSize: '18px'
         });
@@ -146,7 +166,14 @@ class PF_L1 extends Phaser.Scene {
         });
     }
 
+
+// ################## UPDATE ################## //
     update() {
+        const camX = this.cameras.main.scrollX;
+
+        this.bg2.tilePositionX = camX * 0.8;  // 80% camera speed
+        this.bg3.tilePositionX = camX * 0.5;  // 50%
+        this.bg4.tilePositionX = camX * 0.2; 
 
         if(cursors.left.isDown) {
             my.sprite.player.setAccelerationX(-this.ACCELERATION);
