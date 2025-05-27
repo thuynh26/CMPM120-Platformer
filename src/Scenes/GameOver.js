@@ -4,25 +4,26 @@ class GameOver extends Phaser.Scene {
   }
 
   create() {
-    this.cameras.main.setBackgroundColor('#000000');
+
+    this.add.image(0, 0, "fullBG").setOrigin(0,0).setScrollFactor(0).setScale(1);
     const { width, height } = this.scale;
 
     // "Game Over" text
     this.add.text(width / 2, height / 2 - 50, 'Game Over', {
         fontFamily: "Titan One",
-        fontSize: '48px',
-        fill: '#ff0000',
-        stroke: 'ff3126',
+        fontSize: '100px',
+        fill: '#ffffff',
+        stroke: '#8a00c2',
         strokeThickness: 8,
     }).setOrigin(0.5);
 
     // Restart prompt
-    let gameOverText= this.add.text(width / 2, height / 2 + 20, 'Press R to Restart', {
+    let gameOverText= this.add.text(width / 2, height / 2 + 50, 'Press R to Restart', {
         fontFamily: 'Titan One',
-        fontSize: '24px',
-        fill: '#ffffff',
-        stroke: '#ff3126',
-        strokeThickness: 8,
+        fontSize: '64px',
+        fill: '#eeeeee',
+        stroke: '#ca5cdd',
+        strokeThickness: 6,
     }).setOrigin(0.5);
 
     this.tweens.add({
@@ -33,7 +34,7 @@ class GameOver extends Phaser.Scene {
         repeat: -1
     });
 
-    // Go back to title on SPACE
+    // Go back to title on R
     this.input.keyboard.once('keydown-R', () => {
       this.scene.start("level1Scene");
          // CHANGE BACK TO titleScene AFTER FINISH

@@ -9,21 +9,26 @@ class Load extends Phaser.Scene {
         // load game audio
         this.load.audio('bgm', 'bgm.mp3');
 
-        // load player movement audio;
+        // load player movement + game audio;
+        this.load.audio('signSound', 'Sign.wav');
         this.load.audio('dashSound', 'Dash.wav');
         this.load.audio('jumpSound', 'Jump.wav');
         this.load.audio('coinSound', 'CoinCollect.wav');
         this.load.audio('finishSound', 'Finish.wav');
+        this.load.audio('walkSound', 'Walk.mp3');
+        this.load.audio('deathSound', 'Death.wav');
 
         // Load parallax backgound
         this.load.image("bg-1", "bg1.png");
         this.load.image("bg-2", "bg2.png");
         this.load.image("bg-3", "bg3.png");
         this.load.image("bg-4", "bg4.png");
+        this.load.image("fullBG", "fullBG.jpg");
 
-        // load player heart art
+        // load player heart + input art
         this.load.image("heart", "heart.png");
         this.load.image("emptyHeart", "emptyHeart.png"); 
+        this.load.image("eKey" ,"eKey.png");
         
         // Load characters spritesheet
         this.load.atlas("platformer_characters", "tilemap-characters-packed.png", "tilemap-characters-packed.json");
@@ -80,9 +85,7 @@ class Load extends Phaser.Scene {
             ],
         });
 
-         // ...and pass to the next Scene
-        this.scene.start("level1Scene");
-         // CHANGE BACK TO titleScene AFTER FINISH
+        this.scene.start("titleScene");
     }
 
     // Never get here since a new scene is started in create()

@@ -16,7 +16,8 @@ class PF_L1 extends Phaser.Scene {
         this.coinScore = 0;
         this.coinText = null;
 
-        // playe lives
+        // playe spawn point + lives
+        this.spawnPoint = { x: 2200, y: 10 };
         this.playerLives = 5;
         this.livesText = null;
 
@@ -26,6 +27,9 @@ class PF_L1 extends Phaser.Scene {
         this.dashSpeed = 320;     // pixels/sec
         this.dashTime = 150;     // ms duration of dash
         this.dashCooldown = 500;     // ms before you can dash again
+
+        this.uiX = 490;
+        this.uiY = 310;
     }
 
 // ################## CREATE ################## //
@@ -33,8 +37,18 @@ class PF_L1 extends Phaser.Scene {
 
         // game audio
         this.bgMusic = this.sound.add('bgm', {
-            loop: true,
-            volume: 0.10
+            loop: false,
+            volume: 0.1
+        });
+
+        this.signSound = this.sound.add('signSound', {
+            loop: false,
+            volume: 0.5
+        })
+
+        this.walkSound = this.sound.add('walkSound', {
+            loop: false,
+            volume: .5
         });
 
         this.jumpSound = this.sound.add('jumpSound', {
@@ -49,12 +63,17 @@ class PF_L1 extends Phaser.Scene {
 
         this.dashSound = this.sound.add('dashSound', {
             loop: false,
-            volume: .1  
+            volume: .3  
+        });
+
+        this.deathSound = this.sound.add('deathSound', {
+            loop: false,
+            volume: 0.2
         });
 
         this.finishSound = this.sound.add('finishSound', {
             loop: false,
-            volume: .2  
+            volume: .01  
         });
 
         if (!this.bgMusic.isPlaying) {
@@ -117,6 +136,10 @@ class PF_L1 extends Phaser.Scene {
         // Initialize tile animations
         this.animatedTiles.init(this.map);  
 
+            // set up player avatar
+        my.sprite.player = this.physics.add.sprite(this.spawnPoint.x, this.spawnPoint.y, "platformer_characters", "tile_0000.png");
+        my.sprite.player.setDepth(12);
+
         // "coin" objects -> assign coin texture from tilemap sprite sheet
         this.coins = this.map.createFromObjects("Objects", {
             name: "coin",
@@ -125,6 +148,50 @@ class PF_L1 extends Phaser.Scene {
         });
         this.coins.forEach(coin => coin.setDepth(12));
 
+        // "sign" object
+        this.signObj = this.map.createFromObjects("Objects", {
+            name: "sign",
+            key: "tilemap_sheet",
+            frame: 88
+        });
+
+        this.sign = this.signObj[0];
+        this.sign.setDepth(15);
+
+        // "finishLine" object
+        this.finishLineObj = this.map.createFromObjects("Objects", {
+            name: "finishLine",
+            key: "food_tilemap_sheet",
+            frame: 24
+        });
+
+        this.finishLineObj.forEach(finish => {
+            finish.setVisible(false);
+            this.physics.world.enable(finish, Phaser.Physics.Arcade.STATIC_BODY);
+        });
+
+        // detect when player reaches finish line
+        this.physics.add.overlap(
+            my.sprite.player,
+            this.finishLineObj,
+            () => this.onLevelComplete(),
+            null,
+            this
+        );
+
+        const iconY = this.sign.y - 10;
+        this.eKeyIcon = this.add.image(this.sign.x, iconY, 'eKey')
+            .setOrigin(0.5, 1)
+            .setDepth(15);
+
+        this.tweens.add({
+            targets: this.eKeyIcon,
+            y: iconY - 5,
+            ease: 'Sine.easeInOut',
+            yoyo: true,
+            repeat: -1,
+            duration: 800
+        });
         // Create animations for coins from object layer
         this.anims.create({
                 key: 'coinAnim', // Animation key
@@ -138,14 +205,11 @@ class PF_L1 extends Phaser.Scene {
         // Object coins array + animation
         this.anims.play('coinAnim', this.coins);
 
-        // convert coin into arcade physic sprites
+        // convert coin and sign into arcade physic sprites
         this.physics.world.enable(this.coins, Phaser.Physics.Arcade.STATIC_BODY);
         this.coinGroup = this.add.group(this.coins);
 
-        // set up player avatar
-        my.sprite.player = this.physics.add.sprite(30, 300, "platformer_characters", "tile_0000.png");
-        my.sprite.player.setDepth(12);
-        this.spawnPoint = { x: 30, y: 250 };
+        this.physics.world.enable(this.sign, Phaser.Physics.Arcade.STATIC_BODY);
 
         // make the physics world as big as the map
         this.physics.world.setBounds(0, 0, this.map.widthInPixels, this.map.heightInPixels + 100);
@@ -158,6 +222,7 @@ class PF_L1 extends Phaser.Scene {
     // KEY INPUTS
         cursors = this.input.keyboard.createCursorKeys();
         this.rKey = this.input.keyboard.addKey('R');
+        this.eKey = this.input.keyboard.addKey('E');
 
         // player dash key
         this.shiftKey = this.input.keyboard.addKey('SHIFT');
@@ -207,27 +272,29 @@ class PF_L1 extends Phaser.Scene {
         this.cameras.main.setBounds(0, 0, this.map.widthInPixels, this.map.heightInPixels);
         this.cameras.main.startFollow(my.sprite.player, true, 0.08,0.03);
         this.cameras.main.setDeadzone(50, 50);
-        this.cameras.main.setZoom(this.SCALE);
+        this.cameras.main.setZoom(this.SCALE + 1);
 
 
     // DISPLAY SCORE + LIVES
-        this.coinText = this.add.text(370, 380, "Coins: " + this.coinScore, {
+        this.coinText = this.add.text(this.uiX, this.uiY + 20, "Coins: " + this.coinScore, {
             fontFamily: "Titan One",
             fontSize: '18px',
+            stroke: '#ffa700',
+            strokeThickness: 5
         });
         this.coinText.setScrollFactor(0, 0).setDepth(100);
 
         this.hearts = [];
-        const startX = 370;
-        const startY = 380;
-        const spacing = 32;
+        const startX = this.uiX;
+        const startY = this.uiY;
+        const spacing = 20;
         for (let i = 0; i < this.playerLives; i++) {
             const h = this.add
                 .image(startX + i * spacing, startY, 'heart')
                 .setScrollFactor(0)
                 .setOrigin(0, 0)
                 .setDepth(110)
-                .setScale(1.5);      // tweak scale as needed
+                .setScale(1.2); 
 
             this.hearts.push(h);
         }
@@ -253,6 +320,24 @@ class PF_L1 extends Phaser.Scene {
             this.coinScore += 1
             this.coinText.setText("Coins: " + this.coinScore);
         });
+
+        // controls popup menu (hidden by default)
+        const { width, height } = this.scale;
+        this.controlsPopup = this.add.container(width/2, height/2).setDepth(120).setScrollFactor(0);
+        const signBG = this.add.rectangle(0, 0, 300, 200, 0xa79ac9 , 0.6).setOrigin(0.5);
+        const lines = [
+            "CONTROLS\n",
+            "←  → : Move",
+            "↑ : Jump",
+            "SHIFT : Dash",
+            "E : Interact\n",
+            "Reach the Candle at the End!"
+        ];
+        const signTXT  = this.add.text(0, -15, lines.join("\n"), {
+            fontFamily: 'Titan One', fontSize: '18px', fill: '#fff', align: 'center'
+        }).setOrigin(0.5);
+        this.controlsPopup.add([signBG, signTXT]).setVisible(false);
+        
     }
 
 
@@ -264,6 +349,20 @@ class PF_L1 extends Phaser.Scene {
         this.bg3.tilePositionX = camX * 0.5;  // 50%
         this.bg4.tilePositionX = camX * 0.2; 
 
+        // sign interactibility
+        const isTouchingSign = this.physics.overlap(my.sprite.player, this.sign);
+        if (!isTouchingSign && this.controlsPopup.visible) {
+            this.controlsPopup.setVisible(false);
+        }
+
+        this.input.keyboard.on('keydown-E', () => {
+        if (this.physics.overlap(my.sprite.player, this.sign)) {
+            this.signSound.play();
+            this.controlsPopup.setVisible(!this.controlsPopup.visible);
+        }
+        });
+
+        // player movement
         if (Phaser.Input.Keyboard.JustDown(this.shiftKey) && this.canDash) {
             this.dashSound.play();
             this.doDash();        }
@@ -283,11 +382,9 @@ class PF_L1 extends Phaser.Scene {
 
             if(my.sprite.player.body.blocked.down){
                 my.vfx.walking.start();
-                /* walk sound
                 if(!this.walkSound.isPlaying){
                     this.walkSound.play();
                 }
-                */
             }
 
         } else if(cursors.right.isDown) {
@@ -301,11 +398,9 @@ class PF_L1 extends Phaser.Scene {
 
             if(my.sprite.player.body.blocked.down){
                 my.vfx.walking.start();
-                /* walk sound
                 if(!this.walkSound.isPlaying){
                     this.walkSound.play();
                 }
-                */
             }
 
         } else {
@@ -314,8 +409,9 @@ class PF_L1 extends Phaser.Scene {
             my.sprite.player.setDragX(this.DRAG);
             my.sprite.player.anims.play('idle');
 
-            // TODO: have the vfx stop playing
+            // vfx stop playing
             my.vfx.walking.stop();
+            this.walkSound.pause();
         }
 
         // player jump
@@ -334,11 +430,15 @@ class PF_L1 extends Phaser.Scene {
 
         // detect player death
         if (my.sprite.player.y > this.map.heightInPixels + 50) {
+            if (!(this.deathSound.isPlaying)) {
+                this.deathSound.play();
+            }
             this.playerDeath();
         }
 
         if(Phaser.Input.Keyboard.JustDown(this.rKey)) {
             this.scene.restart();
+            this.bgMusic.stop();
         }
 
     }
@@ -400,5 +500,26 @@ class PF_L1 extends Phaser.Scene {
             // reset camera 
             this.cameras.main.centerOn(this.spawnPoint.x, this.spawnPoint.y);
         }
+    }
+
+    onLevelComplete() {
+        // win screen
+        const { width, height } = this.scale;
+        this.add.text(width/2, height/2, 'You Win!\nPress R to Play Again!', {
+        fontFamily: 'Titan One',
+        fontSize: '32px',
+        color: '#fffeff',
+        stroke: '#ffa700',
+        strokeThickness: 6,
+        align: 'center'
+        })
+        .setOrigin(0.5)
+        .setScrollFactor(0)
+        .setDepth(1000);
+
+        this.sound.play('finishSound');
+        // pause player movement
+        my.sprite.player.setVelocity(0, 0);
+        this.physics.world.pause();
     }
 }
