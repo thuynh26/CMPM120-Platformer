@@ -17,7 +17,7 @@ class PF_L1 extends Phaser.Scene {
         this.coinText = null;
 
         // playe spawn point + lives
-        this.spawnPoint = { x: 2200, y: 10 };
+        this.spawnPoint = { x: 30, y: 250 };
         this.playerLives = 5;
         this.livesText = null;
 

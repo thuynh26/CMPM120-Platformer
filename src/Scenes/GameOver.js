@@ -36,8 +36,7 @@ class GameOver extends Phaser.Scene {
 
     // Go back to title on R
     this.input.keyboard.once('keydown-R', () => {
-      this.scene.start("level1Scene");
-         // CHANGE BACK TO titleScene AFTER FINISH
+      this.scene.start("titleScene");
     });
   }
 }
