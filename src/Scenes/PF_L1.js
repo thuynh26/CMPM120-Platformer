@@ -16,13 +16,16 @@ class PF_L1 extends Phaser.Scene {
         this.coinScore = 0;
         this.coinText = null;
 
+        // playe lives
+        this.playerLives = 5;
+        this.livesText = null;
+
         // player dash movement
         this.canDash = true;    // dash cooled down check
         this.isDashing = false;   // 
         this.dashSpeed = 320;     // pixels/sec
         this.dashTime = 150;     // ms duration of dash
         this.dashCooldown = 500;     // ms before you can dash again
-
     }
 
 // ################## CREATE ################## //
@@ -59,25 +62,27 @@ class PF_L1 extends Phaser.Scene {
         }
 
         // parallax background
-        this.add.image(0, 0, "bg-1").setOrigin(0,0).setScrollFactor(0).setScale(this.SCALE + 0.085);
+        this.add.image(0, 0, "bg-1").setOrigin(0,0).setScrollFactor(0).setScale(this.SCALE + 0.085).setDepth(1);
 
         // slowest (farthest back)
         this.bg2 = this.add.tileSprite(0, 0, this.scale.width, 1000, "bg-2")
         .setOrigin(0, 0)
         .setScrollFactor(0)
-        .setScale(this.SCALE + 0.085);
+        .setScale(this.SCALE + 0.085).setDepth(2);
 
         // mid‑distance
         this.bg3 = this.add.tileSprite(0, 0, this.scale.width, 1000, "bg-3")
         .setOrigin(0, 0)
         .setScrollFactor(0)
-        .setScale(this.SCALE + 0.085);
+        .setScale(this.SCALE + 0.085)
+        .setDepth(3);
 
         // closest (fastest)
         this.bg4 = this.add.tileSprite(0, 0, this.scale.width, 1000, "bg-4")
         .setOrigin(0, 0)
         .setScrollFactor(0)
-        .setScale(this.SCALE + 0.085);
+        .setScale(this.SCALE + 0.085)
+        .setDepth(4);
 
         // tilemap game w: 135 tiles, h: 25 tiles, 18x18 pixel tiles
         this.map = this.add.tilemap("platformer-level-1", 18, 18, 135, 25);
@@ -103,6 +108,9 @@ class PF_L1 extends Phaser.Scene {
             0, 0
         );
 
+        this.groundLayer.setDepth(10);
+        this.detailsLayer.setDepth(15);
+
         // now tiles from both sets will render wherever Tile indices point
         this.groundLayer.setCollisionByProperty({ collides: true });
 
@@ -115,6 +123,7 @@ class PF_L1 extends Phaser.Scene {
             key: "tilemap_sheet",
             frame: 151
         });
+        this.coins.forEach(coin => coin.setDepth(12));
 
         // Create animations for coins from object layer
         this.anims.create({
@@ -134,8 +143,9 @@ class PF_L1 extends Phaser.Scene {
         this.coinGroup = this.add.group(this.coins);
 
         // set up player avatar
-        my.sprite.player = this.physics.add.sprite(30, 345, "platformer_characters", "tile_0000.png");
-        this.spawnPoint = { x: 30, y: 345 };
+        my.sprite.player = this.physics.add.sprite(30, 300, "platformer_characters", "tile_0000.png");
+        my.sprite.player.setDepth(12);
+        this.spawnPoint = { x: 30, y: 250 };
 
         // make the physics world as big as the map
         this.physics.world.setBounds(0, 0, this.map.widthInPixels, this.map.heightInPixels + 100);
@@ -173,7 +183,7 @@ class PF_L1 extends Phaser.Scene {
             alpha: {start: 0.4, end: 0.05},
         });
 
-        my.vfx.walking.stop();   
+        my.vfx.walking.stop().setDepth(15);   
 
         // jumping 
         my.vfx.jumping = this.add.particles(0, 0, "kenny-particles", {
@@ -182,7 +192,7 @@ class PF_L1 extends Phaser.Scene {
             lifespan: 350,
             alpha: {start: 0.5, end: 0.05},
         });
-        my.vfx.jumping.stop();   
+        my.vfx.jumping.stop().setDepth(15);   
 
         // dashing
         my.vfx.dashing = this.add.particles(0, 0, "kenny-particles", {
@@ -191,20 +201,36 @@ class PF_L1 extends Phaser.Scene {
             lifespan: 350,
             alpha: {start: 0.5, end: 0.05},
         });
-        my.vfx.dashing.stop();   
+        my.vfx.dashing.stop().setDepth(15);   
 
     // GAME CAMERA
         this.cameras.main.setBounds(0, 0, this.map.widthInPixels, this.map.heightInPixels);
-        this.cameras.main.startFollow(my.sprite.player, true, 0.25, 0.25);
+        this.cameras.main.startFollow(my.sprite.player, true, 0.08,0.03);
         this.cameras.main.setDeadzone(50, 50);
         this.cameras.main.setZoom(this.SCALE);
 
 
-    // DISPLAY SCORE 
-        this.coinText = this.add.text(370, 240, "Coins: " + this.coinScore, {
-            fontSize: '18px'
+    // DISPLAY SCORE + LIVES
+        this.coinText = this.add.text(370, 380, "Coins: " + this.coinScore, {
+            fontFamily: "Titan One",
+            fontSize: '18px',
         });
-        this.coinText.setScrollFactor(0, 0);
+        this.coinText.setScrollFactor(0, 0).setDepth(100);
+
+        this.hearts = [];
+        const startX = 370;
+        const startY = 380;
+        const spacing = 32;
+        for (let i = 0; i < this.playerLives; i++) {
+            const h = this.add
+                .image(startX + i * spacing, startY, 'heart')
+                .setScrollFactor(0)
+                .setOrigin(0, 0)
+                .setDepth(110)
+                .setScale(1.5);      // tweak scale as needed
+
+            this.hearts.push(h);
+        }
 
         // coin collection vfx 
         this.coinParticle = this.add.particles(0, 0, "kenny-particles", {
@@ -308,7 +334,7 @@ class PF_L1 extends Phaser.Scene {
 
         // detect player death
         if (my.sprite.player.y > this.map.heightInPixels + 50) {
-            this.respawnPlayer();
+            this.playerDeath();
         }
 
         if(Phaser.Input.Keyboard.JustDown(this.rKey)) {
@@ -347,24 +373,32 @@ class PF_L1 extends Phaser.Scene {
         }
 
 
-        respawnPlayer() {
-        // 1) move them back to the spawn
-        my.sprite.player.setPosition(this.spawnPoint.x, this.spawnPoint.y);
-
-        // 2) zero out any motion
-        my.sprite.player.setVelocity(0, 0);
-        my.sprite.player.body.allowGravity = true;
-
-        // 3) reset any dash state
-        this.isDashing = false;
-        this.canDash   = true;
-        my.vfx.dashing?.pause();
-
-        // 4) stop any leftover particles
-        my.vfx.walking?.stop();
-        my.vfx.jumping?.stop();
-
-        // 5) (optional) reset camera instantly
-        this.cameras.main.centerOn(this.spawnPoint.x, this.spawnPoint.y);
+    playerDeath() {
+        
+        this.playerLives--;
+        if (this.playerLives >= 0 && this.hearts[this.playerLives]) {
+            this.hearts[this.playerLives].setTexture('emptyHeart');
         }
+
+        // game over if player runs out of lives
+        if (this.playerLives <= 0) {
+            this.scene.start('gameOverScene');
+        } else { // else respawn player at start
+
+            my.sprite.player.setPosition(this.spawnPoint.x, this.spawnPoint.y);
+
+            my.sprite.player.setVelocity(0, 0);
+            my.sprite.player.body.allowGravity = true;
+
+            this.isDashing = false;
+            this.canDash   = true;
+            my.vfx.dashing?.pause();
+
+            my.vfx.walking?.stop();
+            my.vfx.jumping?.stop();
+
+            // reset camera 
+            this.cameras.main.centerOn(this.spawnPoint.x, this.spawnPoint.y);
+        }
+    }
 }
